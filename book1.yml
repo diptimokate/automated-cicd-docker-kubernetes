@@ -1,0 +1,42 @@
+---
+ - name: build image and upload on dockerhub
+   hosts: docker
+   ignore_errors: yes
+   tasks:
+     - name: install docker
+       yum:
+         name: docker
+         state: present
+     - name: start and enable docker
+       service:
+         name: docker
+         state: started
+         enabled: yes
+     - name: add user into group
+       command: usermod -aG docker itadmin
+     - name: Create directory for project
+       file:
+         path: /opt/Docker
+         state: directory
+     - name: transfer Dockerfile
+       copy:
+         src: Dockerfile
+         dest: /opt/Docker/
+     - name: transfer webapp war file
+       copy:
+         src: webapp.war
+         dest: /opt/Docker/
+     - name: change ownership
+       command: chown -R itadmin:itadmin /opt/Docker
+     - name: transfer password token file to docker server for dockerlogin purpose
+       copy:
+         src: pass.txt
+         dest: /opt/Docker/
+     - name: login into dockerhub
+       shell: cd /opt/Docker; cat pass.txt | docker login -u diptimokat --password-stdin
+     - name: build docker image
+       shell: cd /opt/Docker; docker build -t docker_kubernetes_project:latest . 
+     - name: create tag to push image into dockerhub
+       shell: docker tag docker_kubernetes_project:latest  diptimokat/docker_kubernetes_project
+     - name: push docker image into dockerhub
+       command: docker push  diptimokat/docker_kubernetes_project
