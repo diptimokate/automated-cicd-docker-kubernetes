@@ -1,0 +1,17 @@
+---
+- name: deploy app on kubernetes cluster
+   hosts: kubecluster
+   ignore_errors: yes
+   tasks:
+     - name: delete regapp on kubernetes
+       command: kubectl delete -f regapp-deployment.yml
+     - name: deploy regapp on kubernetes
+       command: kubectl apply -f regapp-deployment.yml
+     - name: create service for regapp
+       command: kubectl apply -f regapp-service.yml
+     - name: check service info 
+       command: kubectl get svc
+       register: u
+     - name: use following url to access application using 8080/webapp 
+       debug:
+         msg: "{{ u }}"
